@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>oh-my-config 配置中心</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap">
+  <style>
+    :root{
+      --bg:#0c0e14;--bg2:#13161d;--bg3:#1a1f29;--border:#252b38;
+      --primary:#818cf8;--primary-hover:#a5b4fc;
+      --accent:#34d399;--accent-hover:#6ee7b7;
+      --text:#e2e8f0;--text2:#94a3b8;--text3:#64748b;
+      --danger:#f87171;--warning:#fbbf24;
+      --radius:8px;--radius-sm:6px;--radius-xs:4px;
+    }
+    [data-theme="light"]{
+      --bg:#f8fafc;--bg2:#f1f5f9;--bg3:#e2e8f0;--border:#cbd5e1;
+      --text:#1e293b;--text2:#475569;--text3:#94a3b8;
+    }
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{height:100%;overflow:hidden}
+    body{
+      font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+      background:var(--bg);color:var(--text);
+      transition:background 0.3s, color 0.3s;
+    }
+    
+    .app{display:flex;height:100vh}
+    
+    /* Sidebar */
+    .sidebar{
+      width:220px;background:var(--bg2);border-right:1px solid var(--border);
+      display:flex;flex-direction:column;flex-shrink:0;
+      transition:all 0.3s
+    }
+    .sidebar-header{
+      padding:20px;border-bottom:1px solid var(--border);
+      display:flex;align-items:center;gap:12px
+    }
+    .logo{
+      width:28px;height:28px;background:#1e293b;border:1px solid #334155;
+      border-radius:6px;display:flex;align-items:center;justify-content:center
+    }
+    .logo svg{width:16px;height:16px;fill:var(--primary)}
+    .brand{font-size:15px;font-weight:600;letter-spacing:-0.3px}
+    .brand span{color:var(--primary)}
+    
+    .sidebar-nav{flex:1;overflow:auto;padding:16px 0}
+    .nav-section{padding:8px 12px}
+    .nav-title{
+      font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;
+      color:var(--text3);margin-bottom:8px
+    }
+.nav-item{
+  display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:6px;cursor:pointer;font-size:13px;color:var(--text2);transition:all .15s
+}
+.nav-item.global-wiki{background:rgba(168,85,247,0.15);color:#a855f7;margin:4px 8px;padding:10px 12px;border-radius:8px;font-weight:500}
+.nav-item.global-wiki:hover{background:rgba(168,85,247,0.25)}
+.nav-item:hover{background:var(--bg3);color:var(--text)}
+.nav-item.active{background:rgba(99,102,241,0.15);color:var(--primary)}
+.nav-item .icon{font-size:14px}
+.nav-item .badge{
+  margin-left:auto;font-size:11px;padding:2px 6px;border-radius:10px;background:var(--bg3);color:var(--text2)
+}
+.nav-item .project-delete{
+  opacity:0;position:absolute;right:8px;width:20px;height:20px;border:none;background:rgba(239,68,68,0.8);color:#fff;border-radius:4px;cursor:pointer;font-size:14px;line-height:1
+}
+.nav-item{position:relative}
+.nav-item:hover .project-delete{opacity:1}
+    .nav-item.active .badge{background:rgba(99,102,241,0.2);color:var(--primary)}
+    
+    .sidebar-add{
+      display:flex;gap:6px;padding:12px;border-top:1px solid var(--border)
+    }
+    .sidebar-add input{
+      flex:1;background:var(--bg3);border:1px solid var(--border);
+      border-radius:var(--radius-sm);padding:8px 10px;font-size:12px;
+      color:var(--text);outline:none
+    }
+    .sidebar-add input:focus{border-color:var(--primary)}
+    .sidebar-add button{
+      background:var(--primary);color:#fff;border:none;
+      border-radius:var(--radius-sm);padding:8px 12px;font-size:12px;
+      cursor:pointer
+    }
+    
+    .sidebar-footer{padding:12px;border-top:1px solid var(--border)}
+    .sidebar-action{
+      display:flex;align-items:center;gap:8px;padding:8px 10px;
+      border-radius:var(--radius-sm);cursor:pointer;font-size:12px;
+      color:var(--text2);transition:all 0.15s
+    }
+    .sidebar-action:hover{background:var(--bg3);color:var(--text)}
+    
+    /* Main */
+    .main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+    
+    /* Topbar */
+    .topbar{
+      height:52px;background:var(--bg2);border-bottom:1px solid var(--border);
+      display:flex;align-items:center;padding:0 20px;gap:16px;flex-shrink:0
+    }
+    .breadcrumb{
+      font-size:13px;color:var(--text2);display:flex;align-items:center;gap:6px
+    }
+    .breadcrumb a{color:var(--primary);text-decoration:none}
+    .breadcrumb a:hover{text-decoration:underline}
+    .breadcrumb-sep{color:var(--text3)}
+    
+    .topbar-spacer{flex:1}
+    
+    .topbar-actions{display:flex;gap:6px;align-items:center}
+    .github-link{
+      display:flex;align-items:center;gap:6px;padding:6px 12px;
+      background:transparent;border:1px solid var(--border);border-radius:6px;font-size:12px;
+      color:var(--text2);text-decoration:none;transition:all 0.2s
+    }
+    .github-link:hover{border-color:var(--primary);color:var(--primary)}
+    .github-link svg{width:14px;height:14px}
+    
+    .btn{
+      padding:6px 12px;border-radius:4px;font-size:12px;font-weight:500;
+      cursor:pointer;transition:all 0.15s ease;display:inline-flex;align-items:center;gap:4px
+    }
+    .btn-primary{background:#1a1f29;color:#cbd5e1;border:1px solid #334155}
+    .btn-primary:hover{background:#252d3d;border-color:#475569}
+    .btn-primary:active{background:#0f1521}
+    .btn-success{background:#0f1f14;color:#86efac;border:1px solid #1e3a2a}
+    .btn-success:hover{background:#15261c;border-color:#2d4a35}
+    .btn-success:active{background:#0a140d}
+    .btn-danger{background:#1f0a0a;color:#fca5a5;border:1px solid #3a1e1e}
+    .btn-danger:hover{background:#2c1515;border-color:#4a2d2d}
+    .btn-danger:active{background:#140a0a}
+    .btn-ghost{background:transparent;color:var(--text2);border:1px solid transparent}
+    .btn-ghost:hover{background:var(--bg3);border-color:var(--border);color:var(--text)}
+    .btn-ghost:active{background:var(--border)}
+    .btn-export{background:#1e1a2e;color:#c4b5fd;border:1px solid #2d2450}
+    .btn-export:hover{background:#2a2240;border-color:#3d3270}
+    .btn-export:active{background:#15121f}
+    .btn-sync{background:#1a2e24;color:#6ee7b7;border:1px solid #2d4a3a}
+    .btn-sync:hover{background:#224035;border-color:#3d5a4a}
+    .btn-sync:active{background:#152420}
+    
+    /* Tabs */
+    .tabs{
+      display:flex;gap:4px;padding:12px 16px;background:var(--bg2);
+      border-bottom:1px solid var(--border);flex-shrink:0;align-items:center
+    }
+    .tab{
+      padding:10px 16px;font-size:13px;cursor:pointer;
+      color:var(--text2);border-bottom:2px solid transparent;
+      transition:all 0.15s
+    }
+    .tab:hover{color:var(--text)}
+    .tab.active{color:var(--primary);border-bottom-color:var(--primary)}
+    .tabs-spacer{flex:1}
+    .btn-ghost{background:transparent;color:var(--text2)}
+    .btn-ghost:hover{background:var(--bg3);color:var(--text)}
+    
+    /* Content */
+    .content{flex:1;display:flex;overflow:hidden}
+    
+    /* File List */
+    .file-list{
+      width:240px;background:var(--bg2);border-right:1px solid var(--border);
+      overflow:auto;flex-shrink:0
+    }
+    .file-item{
+      display:flex;align-items:center;gap:8px;padding:10px 16px;
+      border-bottom:1px solid var(--border);cursor:pointer;
+      transition:all 0.2s
+    }
+    .file-item:hover{background:var(--bg3)}
+    .file-item.active{background:rgba(99,102,241,0.15)}
+    .file-item .icon{font-size:14px}
+    .file-item .name{flex:1;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .file-item .tag{
+      font-size:9px;padding:2px 6px;border-radius:4px;
+      background:var(--bg3);color:var(--text3)
+    }
+.file-item .tag.wiki{background:rgba(34,197,94,0.2);color:#4ade80}
+  .file-item .tag.spec{background:rgba(245,158,11,0.2);color:#fbbf24}
+  .file-item .tag.config{background:rgba(99,102,241,0.2);color:#818cf8}
+  .file-item .tag.system{background:rgba(168,85,247,0.2);color:#a855f7}
+  .file-item .tag.spec{background:rgba(210,153,34,0.2);color:#d29922}
+  .file-item .tag.config{background:rgba(88,166,255,0.2);color:#58a6ff}
+    
+    .file-add{
+      display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--border)
+    }
+    .file-add input{
+      flex:1;background:var(--bg3);border:1px solid var(--border);
+      border-radius:var(--radius-sm);padding:8px 10px;font-size:12px;
+      color:var(--text);outline:none
+    }
+    .file-add input:focus{border-color:var(--primary)}
+    .file-add button{
+      background:var(--border);color:var(--text2);border:none;
+      border-radius:var(--radius-sm);padding:8px 10px;font-size:12px;
+      cursor:pointer
+    }
+    .file-add button:hover{color:var(--text)}
+    
+    .file-empty{
+      padding:24px;text-align:center;color:var(--text3);font-size:12px
+    }
+    
+    /* Editor */
+    .editor-area{
+      flex:1;display:flex;flex-direction:column;background:var(--bg);
+      overflow:hidden
+    }
+    .editor-toolbar{
+      padding:8px 16px;border-bottom:1px solid var(--border);
+      display:flex;align-items:center;gap:12px;font-size:11px;color:var(--text3)
+    }
+    .mode-toggle{
+      display:flex;background:var(--bg2);border-radius:var(--radius-sm);overflow:hidden
+    }
+    .mode-toggle span{
+      padding:4px 10px;font-size:11px;cursor:pointer;
+      color:var(--text2);transition:all 0.15s
+    }
+    .mode-toggle span:hover{color:var(--text)}
+    .mode-toggle span.active{background:var(--primary);color:#fff}
+    
+    .editor-content{flex:1;overflow:auto;padding:16px;display:none}
+    .editor-content.show{display:block}
+    .editor-content textarea{
+      width:100%;height:100%;border:none;resize:none;
+      font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.6;
+      color:var(--text);background:transparent;outline:none
+    }
+    
+    /* Preview */
+    .preview-content{
+      flex:1;overflow:auto;padding:20px;font-size:14px;line-height:1.7;
+      display:none
+    }
+    .preview-content.show{display:block}
+    .md-preview h1,.md-preview h2,.md-preview h3,.md-preview h4,.md-preview h5{
+      margin:20px 0 12px;border-bottom:1px solid var(--border);padding-bottom:8px
+    }
+    .md-preview h1{font-size:24px}
+    .md-preview h2{font-size:20px}
+    .md-preview h3{font-size:17px}
+    .md-preview h4{font-size:15px}
+    .md-preview h5{font-size:14px}
+    .md-preview p{margin:8px 0;color:var(--text)}
+    .md-preview code{
+      background:var(--bg2);padding:2px 6px;border-radius:4px;
+      font-family:'JetBrains Mono',monospace;font-size:12px
+    }
+    .md-preview pre{
+      background:var(--bg2);padding:16px;border-radius:var(--radius);
+      overflow-x:auto;margin:12px 0
+    }
+    .md-preview pre code{background:transparent;padding:0}
+    .md-preview ul,.md-preview ol{margin:8px 0;padding-left:20px}
+    .md-preview li{margin:4px 0}
+    .md-preview .md-link{color:var(--primary);text-decoration:none}
+    .md-preview .md-link:hover{text-decoration:underline}
+    .md-preview blockquote{
+      border-left:3px solid var(--primary);margin:12px 0;
+      padding-left:12px;color:var(--text2)
+    }
+    .md-preview table{width:100%;border-collapse:collapse;margin:12px 0}
+    .md-preview td,.md-preview th{border:1px solid var(--border);padding:8px 12px;text-align:left}
+    .md-preview th{background:var(--bg2)}
+    .preview-content.show{display:block}
+    
+    /* Empty State */
+    .empty-state{
+      flex:1;display:flex;flex-direction:column;
+      align-items:center;justify-content:center;color:var(--text3)
+    }
+    .empty-state-icon{font-size:64px;margin-bottom:20px;opacity:0.3;filter:grayscale(0.5)}
+    .empty-state-text{font-size:15px}
+    
+    /* Status Bar */
+    .statusbar{
+      height:26px;background:var(--bg2);border-top:1px solid var(--border);
+      display:flex;align-items:center;padding:0 16px;gap:16px;
+      font-size:11px;color:var(--text3);flex-shrink:0
+    }
+    .statusbar-item{display:flex;align-items:center;gap:4px}
+    .statusbar-dot{width:6px;height:6px;border-radius:50%;background:var(--accent)}
+    
+    /* Help Modal */
+    .help-modal{
+      position:fixed;top:0;left:0;right:0;bottom:0;
+      background:rgba(0,0,0,0.8);z-index:100;
+      display:none;align-items:center;justify-content:center
+    }
+    .help-modal.show{display:flex}
+    .help-content{
+      background:var(--bg2);border:1px solid var(--border);
+      border-radius:var(--radius);width:600px;max-height:80vh;
+      overflow:auto
+    }
+    .help-header{
+      padding:16px 20px;border-bottom:1px solid var(--border);
+      display:flex;justify-content:space-between;align-items:center
+    }
+    .help-header h2{font-size:16px;color:#fff}
+    .help-header button{
+      background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer
+    }
+    .help-body{padding:20px}
+    .help-body h3{
+      font-size:14px;color:var(--primary);margin:16px 0 8px
+    }
+    .help-body h3:first-child{margin-top:0}
+    .help-body p{font-size:13px;color:var(--text2);line-height:1.6}
+    .help-body code{
+      background:var(--bg3);padding:2px 6px;border-radius:4px;
+      font-size:12px
+    }
+    .help-body ul{padding-left:16px}
+    .help-body li{font-size:13px;color:var(--text2);margin:4px 0}
+    
+    /* Scrollbar */
+    ::-webkit-scrollbar{width:8px;height:8px}
+    ::-webkit-scrollbar-track{background:var(--bg)}
+    ::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+    ::-webkit-scrollbar-thumb:hover{background:var(--text3)}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        </div>
+        <div class="brand">oh-my-<span>config</span></div>
+      </div>
+      
+      <div class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-title">全局</div>
+          <div id="globalNav">
+            <div class="nav-item global-wiki ${currentProject === '__GLOBAL__' ? 'active' : ''}" onclick="selectGlobal()">
+              <span>🌐</span> LLM Wiki
+            </div>
+          </div>
+        </div>
+        
+        <div class="nav-section">
+          <div class="nav-title">项目</div>
+          <div id="projectList"></div>
+        </div>
+      </div>
+      
+      <div class="sidebar-add">
+        <input id="newProjectName" placeholder="新项目名..." onkeydown="if(event.key==='Enter')addProject()">
+        <button onclick="addProject()">+</button>
+      </div>
+      
+      <div class="sidebar-footer">
+        <div class="sidebar-action" onclick="showHelp()">
+          <span>📖</span> 使用指南
+        </div>
+      </div>
+    </div>
+    
+    <div class="main">
+      <div class="topbar">
+        <div class="breadcrumb" id="breadcrumb">请选择项目</div>
+        
+        <div class="topbar-spacer"></div>
+        
+        <div class="topbar-actions">
+          <button class="btn btn-ghost" onclick="toggleTheme()" id="themeBtn">🌙</button>
+          <a href="https://github.com/JXzfluser/oh-my-config" target="_blank" class="github-link">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.628-5.476 5.922.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.795.577 4.768-1.588 8.207-6.086 8.207-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            GitHub
+          </a>
+        </div>
+      </div>
+      
+      <div class="tabs">
+        <div class="tab active" data-type="wiki" onclick="switchTab('wiki')">📚 Wiki</div>
+        <div class="tab" data-type="spec" onclick="switchTab('spec')">📝 规范</div>
+        <div class="tab" data-type="config" onclick="switchTab('config')">⚙️ 配置</div>
+        
+        <div class="tabs-spacer"></div>
+        
+        <button class="btn btn-export" onclick="exportToOpenCode()">导出</button>
+        <button class="btn btn-sync" onclick="syncToDir()">下发</button>
+        <button class="btn btn-ghost" id="deleteBtn" onclick="deleteCurrent()" style="display:none">删除</button>
+        <button class="btn btn-primary" onclick="saveCurrent()">保存</button>
+      </div>
+      
+      <div class="content">
+        <div class="file-list" id="fileList"></div>
+        
+        <div class="editor-area" id="editorArea" style="display:none">
+          <div class="editor-toolbar">
+            <span id="editorStatus">就绪</span>
+            <div class="mode-toggle">
+              <span class="active" id="editMode" onclick="setMode('edit')">编辑</span>
+              <span id="previewMode" onclick="setMode('preview')">预览</span>
+            </div>
+          </div>
+          <div class="editor-content">
+            <textarea id="editorTextarea" placeholder="选择或创建文件开始编辑..."></textarea>
+          </div>
+          <div class="preview-content" id="previewArea"></div>
+        </div>
+        
+        <div class="empty-state" id="emptyState">
+          <div class="empty-state-icon">📁</div>
+          <div class="empty-state-text">选择左侧文件开始编辑</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="help-modal" id="helpModal" onclick="if(event.target===this)this.classList.remove('show')">
+    <div class="help-content">
+      <div class="help-header">
+        <h2>📖 使用指南</h2>
+        <button onclick="document.getElementById('helpModal').classList.remove('show')">×</button>
+      </div>
+      <div class="help-body">
+        <h3>🌐 LLM Wiki (全局知识库)</h3>
+        <p>点击左侧「LLM Wiki」进入全局知识库，所有项目共享：</p>
+        <ul>
+          <li><b>INDEX.md</b> - 全局目录</li>
+          <li><b>LOG.md</b> - AI 探索发现记录</li>
+          <li><b>ENTITIES.md</b> - 实体索引</li>
+          <li><b>CONCEPTS.md</b> - 概念索引</li>
+        </ul>
+        
+        <h3>🏠 项目管理</h3>
+        <p>点击项目切换，悬停显示删除按钮。输入新项目名创建。</p>
+        
+        <h3>📁 文件类型</h3>
+        <ul>
+          <li><b>Wiki</b> - 项目知识库 (README、NOTES)</li>
+          <li><b>规范</b> - CLAUDE.md、AGENTS.md 等</li>
+          <li><b>配置</b> - 服务配置 (JSON)</li>
+        </ul>
+        
+        <h3>⌨️ 快捷键</h3>
+        <ul>
+          <li><code>Cmd/Ctrl + S</code> - 保存</li>
+        </ul>
+        
+        <h3>📤 同步</h3>
+        <p>「导出」复制到剪贴板，「下发」同步到目录。</p>
+        
+        <h3>🔗 CLI 命令</h3>
+        <pre style="background:var(--bg2);padding:12px;border-radius:6px;font-size:12px">omc projects      # 列出项目
+omc init myapp   # 初始化项目
+omc get myapp CONFIG  # 获取配置
+omc sync myapp  # 同步到目录</pre>
+      </div>
+    </div>
+  </div>
+  
+  <div class="statusbar">
+    <div class="statusbar-item"><span class="statusbar-dot"></span> 已连接</div>
+    <div class="statusbar-item" id="statusProject">项目: -</div>
+    <div class="statusbar-item" id="statusFile">文件: -</div>
+  </div>
+
+  <script>
+    let currentProject = null;
+    let currentType = 'wiki';
+    let currentFile = null;
+    let allConfigs = [];
+    let projects = [];
+    let hasChanges = false;
+    let viewMode = 'edit';
+
+    async function init() {
+      loadTheme();
+      projects = await (await fetch('/api/projects')).json();
+      renderProjects();
+      if (projects.length > 0) selectProject(projects[0].name);
+    }
+
+    function renderProjects() {
+      document.getElementById('projectList').innerHTML = projects.map(p => 
+        `<div class="nav-item ${currentProject === p.name ? 'active' : ''}" onclick="selectProject('${p.name}')">
+          <span class="icon">📁</span>
+          <span>${p.name}</span>
+          <span class="badge">${p._count || 0}</span>
+          <button class="project-delete" onclick="event.stopPropagation();deleteProject('${p.name}')" title="删除项目">×</button>
+        </div>`
+      ).join('');
+    }
+    
+    async function deleteProject(name) {
+      if (!confirm('确定删除项目 ' + name + '？此操作不可恢复！')) return;
+      try {
+        const res = await fetch('/api/project?name=' + encodeURIComponent(name), {method: 'DELETE'});
+        const data = await res.json();
+        if (!data.success) {
+          alert('删除失败: ' + (data.error || '未知错误'));
+          return;
+        }
+      } catch (e) {
+        console.error('Delete error:', e);
+      }
+      projects = await (await fetch('/api/projects')).json();
+      if (currentProject === name) {
+        currentProject = null;
+        currentFile = null;
+        showEditor(false);
+      }
+      renderProjects();
+      updateStatus();
+    }
+
+    async function addProject() {
+      const input = document.getElementById('newProjectName');
+      const name = input.value.trim();
+      if (!name) return;
+      await fetch('/api/project', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({name, description: ''})
+      });
+      input.value = '';
+      projects = await (await fetch('/api/projects')).json();
+      selectProject(name);
+    }
+
+async function selectProject(name) {
+      currentProject = name;
+      currentFile = null;
+      renderProjects();
+      await loadConfigs();
+      updateStatus();
+    }
+    
+    async function selectGlobal() {
+      currentProject = '__GLOBAL__';
+      currentType = 'wiki';
+      currentFile = null;
+      document.getElementById('globalNav').querySelector('.nav-item')?.classList.add('active');
+      document.querySelectorAll('#projectList .nav-item').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelector('.tab[data-type="wiki"]').classList.add('active');
+      await loadConfigs();
+      showEditor(false);
+      updateStatus();
+    }
+    
+    async function loadConfigs() {
+      if (!currentProject) return;
+      if (currentProject === '__GLOBAL__') {
+        allConfigs = await (await fetch('/api/configs/_global')).json();
+      } else {
+        allConfigs = await (await fetch(`/api/configs/${currentProject}`)).json();
+      }
+      renderFileList();
+      showEditor(false);
+    }
+
+    function renderFileList() {
+      const list = document.getElementById('fileList');
+      const filtered = allConfigs.filter(c => c.type === currentType);
+      
+      let sysHtml = '';
+      if (currentType === 'wiki' && currentProject === '__GLOBAL__') {
+        sysHtml = `
+          <div class="file-item system" onclick="selectFile('INDEX')">
+            <span class="icon">📚</span>
+            <span class="name">INDEX</span>
+            <span class="tag system">全局目录</span>
+          </div>
+          <div class="file-item system" onclick="selectFile('LOG')">
+            <span class="icon">📝</span>
+            <span class="name">LOG</span>
+            <span class="tag system">变更记录</span>
+          </div>
+          <div class="file-item system" onclick="selectFile('ENTITIES')">
+            <span class="icon">🏷️</span>
+            <span class="name">ENTITIES</span>
+            <span class="tag system">实体索引</span>
+          </div>
+          <div class="file-item system" onclick="selectFile('CONCEPTS')">
+            <span class="icon">💡</span>
+            <span class="name">CONCEPTS</span>
+            <span class="tag system">概念索引</span>
+          </div>
+        `;
+      }
+      
+      let html = filtered.map(c => 
+        `<div class="file-item ${currentFile === c.name ? 'active' : ''}" onclick="selectFile('${c.name}')">
+          <span class="icon">${getIcon(c.type)}</span>
+          <span class="name">${c.name}</span>
+          <span class="tag ${c.type}">${c.type}</span>
+        </div>`
+      ).join('');
+      
+      const templates = currentType === 'config' ? [
+        {name: 'ENV', label: 'ENV 环境'},
+        {name: 'MYSQL', label: 'MySQL'},
+        {name: 'REDIS', label: 'Redis'},
+        {name: 'ELASTICSEARCH', label: 'Elasticsearch'},
+        {name: 'MONGODB', label: 'MongoDB'},
+        {name: 'KAFKA', label: 'Kafka'},
+        {name: 'RABBITMQ', label: 'RabbitMQ'},
+        {name: 'SMTP', label: 'SMTP 邮件'},
+        {name: 'ALIPAY', label: '支付宝'},
+        {name: 'WECHAT', label: '微信'}
+      ] : [];
+      
+      let addHtml = '<div class="file-add" style="flex-direction:column;align-items:stretch;gap:6px">';
+      if (currentType === 'config') {
+        addHtml += '<select id="templateSelect" onchange="selectTemplate()" style="padding:6px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:12px"><option value="">选择模板...</option>';
+        templates.forEach(t => {
+          addHtml += `<option value="${t.name}">${t.label}</option>`;
+        });
+        addHtml += '</select>';
+      }
+      addHtml += '<div style="display:flex;gap:4px"><input id="newFileName" placeholder="新建..." onkeydown="if(event.key===\'Enter\')addFile()"><button onclick="addFile()" style="padding:6px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:var(--text);cursor:pointer">+</button></div></div>';
+      list.innerHTML = sysHtml + html + addHtml;
+    }
+
+    function getIcon(type) {
+      return {wiki:'📄', spec:'📋', config:'⚙️'}[type] || '📄';
+    }
+    function getTypeName(type) {
+      return {wiki:'Wiki', spec:'规范', config:'配置'}[type] || type;
+    }
+
+    function switchTab(type) {
+      if (currentProject === '__GLOBAL__' && type !== 'wiki') {
+        return;
+      }
+      currentType = type;
+      currentFile = null;
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelector(`.tab[data-type="${type}"]`).classList.add('active');
+      renderFileList();
+      showEditor(false);
+      updateStatus();
+    }
+    
+    const TEMPLATES = {
+      'ENV': '{\n  "APP_NAME": "NAME",\n  "DEBUG": false,\n  "PORT": 3000,\n  "NODE_ENV": "development"\n}',
+      'MYSQL': '{\n  "host": "localhost",\n  "port": 3306,\n  "database": "app_db",\n  "username": "root",\n  "password": "",\n  "charset": "utf8mb4",\n  "pool": {"min": 2, "max": 10}\n}',
+      'REDIS': '{\n  "host": "localhost",\n  "port": 6379,\n  "password": "",\n  "db": 0,\n  "keyPrefix": "app:",\n  "pool": {"min": 2, "max": 10}\n}',
+      'ELASTICSEARCH': '{\n  "nodes": ["http://localhost:9200"],\n  "username": "",\n  "password": "",\n  "indexPrefix": "app_",\n  "ssl": false\n}',
+      'MONGODB': '{\n  "uri": "mongodb://localhost:27017",\n  "database": "app_db",\n  "username": "",\n  "password": "",\n  "options": {"maxPoolSize": 10, "minPoolSize": 2}\n}',
+      'KAFKA': '{\n  "brokers": ["localhost:9092"],\n  "clientId": "app",\n  "username": "",\n  "password": "",\n  "topics": {"events": "app_events"}\n}',
+      'RABBITMQ': '{\n  "host": "localhost",\n  "port": 5672,\n  "username": "guest",\n  "password": "",\n  "vhost": "/",\n  "queue": "app_queue"\n}',
+      'SMTP': '{\n  "host": "smtp.example.com",\n  "port": 587,\n  "secure": false,\n  "username": "",\n  "password": "",\n  "from": "noreply@example.com"\n}',
+      'ALIPAY': '{\n  "appId": "",\n  "privateKey": "",\n  "alipayPublicKey": ""\n}',
+      'WECHAT': '{\n  "appId": "",\n  "appSecret": "",\n  "token": "",\n  "aesKey": ""\n}'
+    };
+
+    function selectTemplate() {
+      const select = document.getElementById('templateSelect');
+      const input = document.getElementById('newFileName');
+      const template = select.value;
+      if (template) {
+        input.value = template;
+      }
+    }
+
+    async function addFile() {
+      const input = document.getElementById('newFileName');
+      const name = input.value.trim();
+      if (!name || !currentProject) return;
+      let content = '{}';
+      if (currentType === 'config' && TEMPLATES[name]) {
+        content = TEMPLATES[name];
+      } else if (currentType === 'config') {
+        content = '{}';
+      } else {
+        content = '';
+      }
+      await fetch('/api/config', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({project: currentProject, type: currentType, name, content})
+      });
+      input.value = '';
+      if (document.getElementById('templateSelect')) {
+        document.getElementById('templateSelect').value = '';
+      }
+      await loadConfigs();
+      selectFile(name);
+    }
+
+    async function selectFile(name) {
+      if (hasChanges && currentFile && !confirm('有未保存的更改，确定切换?')) return;
+      currentFile = name;
+      renderFileList();
+      
+      let content = '';
+      const sysFiles = ['INDEX', 'LOG', 'ENTITIES', 'CONCEPTS'];
+      if (sysFiles.includes(name) && currentProject === '__GLOBAL__') {
+        const now = new Date().toISOString().split('T')[0];
+        const wikiFiles = allConfigs.filter(c => c.type === 'wiki');
+        
+        if (name === 'INDEX') {
+          const list = wikiFiles.map(c => `- [${c.name}.md](${c.name}.md) - 点击查看`).join('\n');
+          content = `# 全局 Wiki\n\n> 所有项目共享的知识库\n\n## 目录\n\n${list || '- 无内容'}\n\n## 系统文件\n- INDEX.md - 全局目录\n- LOG.md - 变更记录\n- ENTITIES.md - 实体索引\n- CONCEPTS.md - 概念索引`;
+        } else if (name === 'LOG') {
+          content = `# LOG.md\n\n> 全局知识变更记录\n\n## ${now}\n\n### 新发现\n\n- \n\n### 待整理\n\n- [ ] \n\n### 问答记录\n\n**Q**: \n**A**: \n`;
+        } else if (name === 'ENTITIES') {
+          content = `# ENTITIES.md\n\n> 实体页索引\n\n## 什么是实体\n\n实体是指具体的人、地点、组织、工具等有明确身份的事物。\n\n## 全局实体\n\n| 名称 | 描述 | 更新时间 |\n|------|------|----------|\n${wikiFiles.map(c => `| ${c.name} | - | ${now} |`).join('\n')}\n`;
+        } else if (name === 'CONCEPTS') {
+          content = `# CONCEPTS.md\n\n> 概念页索引\n\n## 什么是概念\n\n概念是指抽象的思想、模式、方法论等。\n\n## 全局概念\n\n| 名称 | 类别 | 描述 |\n|------|------|------|\n| | | |\n`;
+        }
+      } else {
+        const result = await (await fetch(`/api/config/${currentProject}/${currentType}/${name}`)).json();
+        content = result.content || '';
+      }
+      
+      document.getElementById('editorTextarea').value = content;
+      hasChanges = false;
+      showEditor(true);
+      setMode('edit');
+      updateStatus();
+    }
+
+    function showEditor(show) {
+      document.getElementById('editorArea').style.display = show ? 'flex' : 'none';
+      document.getElementById('emptyState').style.display = show ? 'none' : 'flex';
+      document.getElementById('deleteBtn').style.display = show ? 'block' : 'none';
+    }
+
+    function setMode(mode) {
+      viewMode = mode;
+      document.getElementById('editMode').classList.toggle('active', mode === 'edit');
+      document.getElementById('previewMode').classList.toggle('active', mode === 'preview');
+      document.getElementById('editorTextarea').style.display = mode === 'edit' ? 'block' : 'none';
+      document.querySelector('.editor-content').classList.toggle('show', mode === 'edit');
+      document.getElementById('previewArea').style.display = mode === 'preview' ? 'flex' : 'none';
+      document.querySelector('.preview-content').classList.toggle('show', mode === 'preview');
+      if (mode === 'preview') renderMarkdown();
+    }
+
+    function renderMarkdown() {
+      const text = document.getElementById('editorTextarea').value;
+      let html = text
+        .replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/^##### (.+)$/gm, '<h5>$1</h5>')
+        .replace(/^#### (.+)$/gm, '<h4>$1</h4>')
+        .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+        .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+        .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+        .replace(/`([^`]+)`/g, '<code>$1</code>')
+        .replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre><code class="lang-$1">$2</code></pre>')
+        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="md-link">$1</a>')
+        .replace(/^[-*] (.+)$/gm, '<li>$1</li>')
+        .replace(/^(\d+)\. (.+)$/gm, '<li class="ol">$2</li>')
+        .replace(/\|(.+)\|/g, (m) => {
+          const cells = m.split('|').filter(c => c.trim());
+          return '<td>' + cells.join('</td><td>') + '</td>';
+        })
+        .replace(/^-{3,}/g, '')
+        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+        .replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>');
+      
+      document.getElementById('previewArea').innerHTML = '<div class="md-preview">' + html + '</div>';
+    }
+
+    async function saveCurrent() {
+      if (!currentProject || !currentFile) return;
+      const content = document.getElementById('editorTextarea').value;
+      await fetch('/api/config', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({project: currentProject, type: currentType, name: currentFile, content})
+      });
+      hasChanges = false;
+      document.getElementById('editorStatus').textContent = '已保存 ' + new Date().toLocaleTimeString();
+      await loadConfigs();
+    }
+
+    async function deleteCurrent() {
+      if (!currentProject || !currentFile) return;
+      if (!confirm('删除 ' + currentFile + '?')) return;
+      await fetch('/api/delete', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({project: currentProject, type: currentType, name: currentFile})
+      });
+      currentFile = null;
+      showEditor(false);
+      await loadConfigs();
+    }
+
+    function showHelp() {
+      document.getElementById('helpModal').classList.add('show');
+    }
+
+    function toggleTheme() {
+      const html = document.documentElement;
+      const current = html.getAttribute('data-theme');
+      const next = current === 'light' ? 'dark' : 'light';
+      html.setAttribute('data-theme', next);
+      localStorage.setItem('omc-theme', next);
+      document.getElementById('themeBtn').textContent = next === 'light' ? '🌙' : '☀️';
+    }
+
+    function loadTheme() {
+      const theme = localStorage.getItem('omc-theme') || 'dark';
+      if (theme === 'light') {
+        document.documentElement.setAttribute('data-theme', 'light');
+        document.getElementById('themeBtn').textContent = '🌙';
+      }
+    }
+
+    async function exportToOpenCode() {
+      if (!currentProject) {
+        alert('请先选择项目');
+        return;
+      }
+      const configData = {}, specData = {}, wikiData = {};
+      allConfigs.forEach(c => {
+        if (c.type === 'config') configData[c.name] = c.content;
+        else if (c.type === 'spec') specData[c.name] = c.content;
+        else wikiData[c.name] = c.content;
+      });
+      const exportData = {project: currentProject, config: configData, spec: specData, wiki: wikiData};
+      await navigator.clipboard.writeText(JSON.stringify(exportData, null, 2));
+      document.getElementById('editorStatus').textContent = '✓ 已复制到剪贴板';
+      setTimeout(() => document.getElementById('editorStatus').textContent = '就绪', 2000);
+    }
+
+    async function syncToDir() {
+      if (!currentProject) {
+        alert('请先选择项目');
+        return;
+      }
+      const target = prompt('输入目标目录:', '~/projects/' + currentProject);
+      if (!target) return;
+      
+      const res = await fetch('/api/sync', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({project: currentProject, target})
+      });
+      const result = await res.json();
+      document.getElementById('editorStatus').textContent = '✓ 已下发到 ' + target;
+      setTimeout(() => document.getElementById('editorStatus').textContent = '就绪', 2000);
+    }
+
+    function updateStatus() {
+      document.getElementById('statusProject').textContent = '项目: ' + (currentProject || '-');
+      document.getElementById('statusFile').textContent = '文件: ' + (currentFile || '-');
+      const breadcrumb = document.getElementById('breadcrumb');
+      if (currentProject && currentFile) {
+        breadcrumb.innerHTML = '<a>' + currentProject + '</a><span class="breadcrumb-sep">/</span>' + currentType + '<span class="breadcrumb-sep">/</span>' + currentFile;
+      } else if (currentProject) {
+        breadcrumb.innerHTML = '<a>' + currentProject + '</a>';
+      } else {
+        breadcrumb.textContent = '请选择项目';
+      }
+    }
+
+    document.getElementById('editorTextarea').addEventListener('input', () => {
+      hasChanges = true;
+      document.getElementById('editorStatus').textContent = '● 已修改';
+    });
+
+    document.addEventListener('keydown', e => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        saveCurrent();
+      }
+    });
+
+    init();
+  </script>
+</body>
+</html>

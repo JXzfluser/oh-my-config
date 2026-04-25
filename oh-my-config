@@ -1,0 +1,467 @@
+#!/usr/bin/env python3
+"""oh-my-config CLI - AI-powered project config manager"""
+import argparse, json, os, sys, requests, datetime
+
+API = 'http://localhost:8848'
+
+def cmd_projects(args):
+    r = requests.get(f'{API}/api/projects').json()
+    for p in r:
+        print(p['name'])
+
+def cmd_init(args):
+    name = args.name or input('项目名称: ').strip()
+    if not name:
+        print('错误: 需要项目名称', file=sys.stderr)
+        return 1
+    
+    desc = args.description or ''
+    
+    r = requests.post(f'{API}/api/project', json={'name': name, 'description': desc})
+    if r.status_code != 200:
+        print(f'错误: {r.text}', file=sys.stderr)
+        return 1
+    
+    templates = {
+        'wiki': {
+            'INDEX': f'''# {name} Wiki
+
+> AI 维护的知识库入口
+
+## 概述
+
+{desc}
+
+## 目录
+
+- [README.md](README.md) - 项目概览
+- [INDEX.md](INDEX.md) - 本文档，Wiki 入口
+- [LOG.md](LOG.md) - AI 探索和发现记录
+- [ENTITIES/](entities.md) - 实体页
+- [CONCEPTS/](concepts.md) - 概念页
+
+## 使用
+
+1. AI 查询时先读 INDEX.md 找到相关页面
+2. 发现新知识写入 LOG.md
+3. 定期将 LOG.md 整理到实体/概念页
+
+## 更新日志
+
+- {datetime.datetime.now().strftime('%Y-%m-%d')} - 创建 Wiki
+''',
+            'LOG': f'''# LOG.md
+
+> AI 探索和发现记录
+
+每次问答中产生的有价值信息都应该记录在这里。
+
+## {datetime.datetime.now().strftime('%Y-%m-%d')}
+
+### 新发现
+
+- 
+
+### 待整理
+
+- [ ] 
+
+### 问答记录
+
+**Q**: 
+**A**:
+
+---
+''',
+            'ENTITIES': '''# ENTITIES.md
+
+> 实体页索引
+
+## 什么是实体
+
+实体是指具体的人、地点、组织、工具等有明确身份的事物。
+
+## 实体列表
+
+| 名称 | 类型 | 描述 | 更新时间 |
+|------|------|------|----------|
+| | | | |
+
+## 最近更新
+
+- 
+''',
+            'CONCEPTS': '''# CONCEPTS.md
+
+> 概念页索引
+
+## 什么是概念
+
+概念是指抽象的思想、模式、方法论等。
+
+## 概念列表
+
+| 名称 | 类别 | 描述 | 更新时间 |
+|------|------|------|----------|
+| | | | |
+
+## 最近更新
+
+- 
+''',
+            'README': f'''# {name}
+
+项目描述: {desc}
+
+## 概述
+
+这是一个使用 oh-my-config 管理配置的项目。
+
+## 技术栈
+
+- 
+- 
+
+## 开发指南
+
+1. 
+2. 
+
+## 相关资源
+
+- 
+'''
+        },
+        'spec': {
+            'CLAUDE': '''# CLAUDE.md
+
+## 项目概述
+
+## LLM Wiki 工作流
+
+你维护着一个 AI 生成的知识库 (wiki/)，请遵循以下流程：
+
+### 查询流程
+1. 先读取 `wiki/INDEX.md` 了解 Wiki 结构
+2. 根据 INDEX 找到相关页面
+3. 深入阅读相关实体/概念页
+4. 如需新知识，标记在 LOG.md
+
+### 写入流程
+1. 有价值的发现写入 `wiki/LOG.md`
+2. 定期将 LOG 整理到 `wiki/ENTITIES.md` 或 `wiki/CONCEPTS.md`
+3. 更新 `wiki/INDEX.md` 保持目录最新
+
+### 知识沉淀原则
+- 好的答案要写回 Wiki（知识复合）
+- 不要每次都重新推导，要复用已有 Wiki
+- 实体页：人、地点、工具等具体事物
+- 概念页：模式、方法论等抽象知识
+
+## 代码规范
+
+- 使用 2 空格缩进
+- ES6+ 语法
+
+## 交互规范
+
+- 使用中文
+- 简洁回复
+
+## 工具
+
+- 
+
+## 工作流
+
+1. 理解需求
+2. 查 Wiki (先 INDEX 再相关页)
+3. 执行
+4. 有价值信息写入 LOG
+''',
+            'GIT': '''# Git 规范
+
+## 提交信息格式
+
+```
+type: description
+
+Types:
+- feat: 新功能
+- fix: 修复
+- refactor: 重构
+- docs: 文档
+- test: 测试
+```
+''',
+            'AGENTS': '''# AGENTS.md
+
+## Agent 角色
+
+- 语言: 中文
+- 风格: 简洁高效
+
+## 可用技能
+
+- debug: 调试
+- explore: 代码探索
+- refactor: 重构
+
+## 工作流
+
+1. 理解需求
+2. 实现
+3. 验证
+'''
+        },
+        'config': {
+            'ENV': '''{
+  "APP_NAME": "NAME",
+  "DEBUG": false,
+  "PORT": 3000,
+  "NODE_ENV": "development"
+}''',
+            'MYSQL': '''{
+  "host": "localhost",
+  "port": 3306,
+  "database": "app_db",
+  "username": "root",
+  "password": "",
+  "charset": "utf8mb4",
+  "pool": {
+    "min": 2,
+    "max": 10
+  }
+}''',
+            'REDIS': '''{
+  "host": "localhost",
+  "port": 6379,
+  "password": "",
+  "db": 0,
+  "keyPrefix": "app:",
+  "pool": {
+    "min": 2,
+    "max": 10
+  }
+}''',
+            'ELASTICSEARCH': '''{
+  "nodes": [
+    "http://localhost:9200"
+  ],
+  "username": "",
+  "password": "",
+  "indexPrefix": "app_",
+  "ssl": false
+}''',
+            'MONGODB': '''{
+  "uri": "mongodb://localhost:27017",
+  "database": "app_db",
+  "username": "",
+  "password": "",
+  "options": {
+    "maxPoolSize": 10,
+    "minPoolSize": 2
+  }
+}''',
+            'KAFKA': '''{
+  "brokers": [
+    "localhost:9092"
+  ],
+  "clientId": "app",
+  "username": "",
+  "password": "",
+  "topics": {
+    "events": "app_events"
+  }
+}''',
+            'RABBITMQ': '''{
+  "host": "localhost",
+  "port": 5672,
+  "username": "guest",
+  "password": "",
+  "vhost": "/",
+  "queue": "app_queue"
+}''',
+            'SMTP': '''{
+  "host": "smtp.example.com",
+  "port": 587,
+  "secure": false,
+  "username": "",
+  "password": "",
+  "from": "noreply@example.com"
+}''',
+            'ALIPAY': '''{
+  "appId": "",
+  "privateKey": "",
+  "alipayPublicKey": ""
+}''',
+            'WECHAT': '''{
+  "appId": "",
+  "appSecret": "",
+  "token": "",
+  "aesKey": ""
+}'''
+        }
+    }
+    
+    for typ, files in templates.items():
+        for fname, content in files.items():
+            requests.post(f'{API}/api/config', json={
+                'project': name,
+                'type': typ,
+                'name': fname,
+                'content': content
+            })
+    
+    print(f'✓ 已创建项目 {name}')
+    return 0
+
+def cmd_list(args):
+    project = args.project
+    if not project:
+        print('错误: 需要指定项目 (-p)', file=sys.stderr)
+        return 1
+    
+    r = requests.get(f'{API}/api/configs/{project}').json()
+    for c in r:
+        print(f'{c["type"]}/{c["name"]}')
+
+def cmd_get(args):
+    project, typ, name = args.project, args.type, args.name
+    if not all([project, typ, name]):
+        print('错误: 需要 -p -t -n', file=sys.stderr)
+        return 1
+    
+    r = requests.get(f'{API}/api/config/{project}/{typ}/{name}').json()
+    print(r.get('content', ''))
+    return 0
+
+def cmd_set(args):
+    project, typ, name = args.project, args.type, args.name
+    if not all([project, typ, name]):
+        print('错误: 需要 -p -t -n', file=sys.stderr)
+        return 1
+    
+    content = args.content or sys.stdin.read()
+    
+    r = requests.post(f'{API}/api/config', json={
+        'project': project,
+        'type': typ,
+        'name': name,
+        'content': content
+    })
+    if r.status_code == 200:
+        print(f'✓ 已保存 {typ}/{name}')
+        return 0
+    else:
+        print(f'错误: {r.text}', file=sys.stderr)
+        return 1
+
+def cmd_sync(args):
+    project = args.project
+    if not project:
+        print('错误: 需要 -p', file=sys.stderr)
+        return 1
+    
+    target = args.target or f'~/projects/{project}'
+    r = requests.post(f'{API}/api/sync', json={'project': project, 'target': target})
+    if r.status_code == 200:
+        print(f'✓ 已同步到 {target}')
+        return 0
+    else:
+        print(f'错误: {r.text}', file=sys.stderr)
+        return 1
+
+def cmd_ai(args):
+    import datetime
+    project = args.project
+    prompt = args.prompt
+    typ = args.type or 'wiki'
+    name = args.name or 'ai-generated'
+    
+    if not project:
+        print('错误: 需要 -p', file=sys.stderr)
+        return 1
+    
+    if not prompt:
+        print('错误: 需要 --prompt', file=sys.stderr)
+        return 1
+    
+    content = f'''# AI 生成的内容
+
+## 请求
+
+{prompt}
+
+## 生成时间
+
+{datetime.datetime.now().isoformat()}
+
+## 说明
+
+请编辑此内容以匹配你的需求。
+'''
+    
+    r = requests.post(f'{API}/api/config', json={
+        'project': project,
+        'type': typ,
+        'name': name,
+        'content': content
+    })
+    
+    if r.status_code == 200:
+        print(f'✓ 已生成 {typ}/{name}')
+        return 0
+    else:
+        print(f'错误: {r.text}', file=sys.stderr)
+        return 1
+
+def main():
+    parser = argparse.ArgumentParser(prog='oh-my-config')
+    sub = parser.add_subparsers()
+    
+    p_projects = sub.add_parser('projects', help='列出项目')
+    p_projects.set_defaults(func=cmd_projects)
+    
+    p_init = sub.add_parser('init', help='初始化项目')
+    p_init.add_argument('name', nargs='?')
+    p_init.add_argument('-d', '--description')
+    p_init.set_defaults(func=cmd_init)
+    
+    p_list = sub.add_parser('list', help='列出配置')
+    p_list.add_argument('-p', '--project', required=True)
+    p_list.set_defaults(func=cmd_list)
+    
+    p_get = sub.add_parser('get', help='获取配置')
+    p_get.add_argument('-p', '--project', required=True)
+    p_get.add_argument('-t', '--type', required=True)
+    p_get.add_argument('-n', '--name', required=True)
+    p_get.set_defaults(func=cmd_get)
+    
+    p_set = sub.add_parser('set', help='设置配置')
+    p_set.add_argument('-p', '--project', required=True)
+    p_set.add_argument('-t', '--type', required=True)
+    p_set.add_argument('-n', '--name', required=True)
+    p_set.add_argument('-c', '--content', default='')
+    p_set.set_defaults(func=cmd_set)
+    
+    p_sync = sub.add_parser('sync', help='同步到目录')
+    p_sync.add_argument('-p', '--project', required=True)
+    p_sync.add_argument('-t', '--target')
+    p_sync.set_defaults(func=cmd_sync)
+    
+    p_ai = sub.add_parser('ai', help='AI 生成配置')
+    p_ai.add_argument('-p', '--project', required=True)
+    p_ai.add_argument('--prompt', required=True)
+    p_ai.add_argument('-t', '--type', default='wiki')
+    p_ai.add_argument('-n', '--name')
+    p_ai.set_defaults(func=cmd_ai)
+    
+    args = parser.parse_args()
+    if hasattr(args, 'func'):
+        return args.func(args)
+    parser.print_help()
+    return 0
+
+if __name__ == '__main__':
+    sys.exit(main())
