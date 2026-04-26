@@ -389,6 +389,101 @@ def get_skill():
             return f.read()
     return '# Skill not found', 404
 
+@app.route('/api/scan-import', methods=['POST'])
+def scan_import():
+    d = request.json
+    name = d.get('name')
+    path = os.path.expanduser(d.get('path', '.'))
+    
+    if not name or not os.path.isdir(path):
+        return jsonify({'error': 'name and valid path required'}), 400
+    
+    project_name = name
+    files_found = []
+    configs = {}
+    
+    # Project info from pom.xml or package.json
+    pom_file = os.path.join(path, 'pom.xml')
+    if os.path.exists(pom_file):
+        with open(pom_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+            files_found.append('pom.xml')
+            if '<artifactId>' in content:
+                import re
+                m = re.search(r'<artifactId>(.*?)</artifactId>', content)
+                if m:
+                    configs['PROJECT'] = {'type': 'java-maven', 'name': m.group(1)}
+    
+    pkg_file = os.path.join(path, 'package.json')
+    if os.path.exists(pkg_file):
+        with open(pkg_file, 'r', encoding='utf-8') as f:
+            try:
+                pkg = json.load(f)
+                files_found.append('package.json')
+                configs['PROJECT'] = {'type': 'nodejs', 'name': pkg.get('name', '')}
+            except:
+                pass
+    
+    # README
+    readme_file = os.path.join(path, 'README.md')
+    if os.path.exists(readme_file):
+        with open(readme_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+            files_found.append('README.md')
+    
+    # Config files
+    config_patterns = ['.env', '.env.local', '.env.dev', '.env.prod', 
+                       'config.json', 'config.yml', 'config.yaml', 'application.yml', 'application.properties']
+    for pattern in config_patterns:
+        config_file = os.path.join(path, pattern)
+        if os.path.exists(config_file):
+            files_found.append(pattern)
+            try:
+                with open(config_file, 'r', encoding='utf-8') as f:
+                    configs[pattern] = f.read()[:10000]
+            except:
+                pass
+    
+    # Create project
+    conn = sqlite3.connect(DB)
+    conn.execute('INSERT OR IGNORE INTO project (name) VALUES (?)', (project_name,))
+    conn.commit()
+    conn.close()
+    
+    # Import as Wiki
+    summary = f'''# {project_name}
+
+> 自动导入的项目
+
+## 项目文件
+
+{files_found}
+
+## 项目配置
+
+{json.dumps(configs, indent=2, ensure_ascii=False)}
+
+## 扫描时间
+
+{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+'''
+    
+    conn = sqlite3.connect(DB)
+    conn.execute(
+        '''INSERT OR REPLACE INTO config (project, type, name, content, updated_at)
+           VALUES (?, 'wiki', 'INDEX', ?, ?)''',
+        (project_name, summary, datetime.now().isoformat())
+    )
+    conn.commit()
+    conn.close()
+    
+    return jsonify({
+        'success': True,
+        'message': f'Project {project_name} created with {len(files_found)} files',
+        'project': project_name,
+        'files': files_found
+    })
+
 @app.route('/api/search')
 def search_api():
     q = request.args.get('q', '').lower()

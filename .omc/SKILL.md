@@ -35,28 +35,10 @@ uv run --with flask python3 server.py
 ```bash
 omc projects          # 列出项目
 omc init myapp       # 初始化项目
-omc init myapp /path/to/project  # 初始化并导入配置
 omc list -p myapp   # 列出配置
 omc get myapp MYSQL  # 获取配置
 omc sync myapp      # 同步到目录
 ```
-
-### 项目初始化
-
-使用 `omc init` 扫描项目并导入配置：
-
-```bash
-omc init myapp /path/to/project   # 创建项目并导入配置
-omc init                           # 扫描当前目录并导入
-```
-
-**自动扫描内容：**
-- pom.xml, package.json → 项目类型和技术栈
-- README.md → 项目说明
-- .env, config.json, application.yml → 配置文件
-
-**导入后存储为：**
-- Wiki/INDEX → 项目摘要和配置概览
 
 ## 知识自动记录
 
