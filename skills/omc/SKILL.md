@@ -1,15 +1,20 @@
 # omc
 
-> 本地配置中心 + LLM Wiki - 符合 Karpathy 理念
+> 本地配置中心 + LLM Wiki + MCP Server - 项目一键接入 AI
 
-## 启动服务
+## 快速开始
 
 ```bash
+# 1. 启动服务
 cd ~/projects/oh-my-config
 uv run --with flask python3 server.py
-```
 
-服务: http://127.0.0.1:8848
+# 2. 初始化项目（只需一次）
+omc init /path/to/project
+
+# 3. 启动 MCP Server（AI 需要操作数据库时）
+omc mcp /path/to/project
+```
 
 ## 核心概念
 
@@ -30,39 +35,113 @@ uv run --with flask python3 server.py
 - **Spec** - 规范 (CLAUDE.md, AGENTS.md, GEMINI.md)
 - **Config** - 服务配置 (JSON)
 
+## MCP Server（核心功能）
+
+AI 可以直接操作数据库的工具：
+
+### MySQL
+
+```python
+# 执行 SQL
+mysql_query("SELECT * FROM users LIMIT 10")
+mysql_query("INSERT INTO logs (msg) VALUES ('hello')")
+mysql_query("UPDATE users SET name='新名字' WHERE id=1")
+```
+
+### Redis
+
+```python
+# 读写缓存
+redis_get("user:1")
+redis_set("user:1", '{"name": "张三"}')
+```
+
+### Elasticsearch
+
+```python
+# 搜索
+es_search("users", '{"query": {"match": {"name": "张"}}}')
+es_count("users")
+es_index("users", '{"name": "李四", "age": 25}')
+```
+
+### 项目信息
+
+```python
+# 查看配置
+get_project_info()
+load_project("/path/to/project")
+```
+
 ## CLI 命令
 
 ```bash
-omc projects          # 列出项目
-omc init myapp       # 初始化项目
-omc init myapp /path/to/project  # 初始化并导入配置
-omc list -p myapp   # 列出配置
-omc get myapp MYSQL  # 获取配置
-omc sync myapp      # 同步到目录
+# 项目管理
+omc projects              # 列出所有项目
+omc init [name] [path]   # 初始化项目
+omc config [project]     # 查看项目配置
+omc list <project>      # 列出配置
+omc get <project> <type> <name>  # 获取配置
+omc set <project> <type> <name> <content>  # 设置配置
+omc sync <project>     # 同步到目录
+
+# MCP Server
+omc mcp [project]    # 启动 MCP Server
 ```
 
-### 项目初始化
+## 使用流程
 
-使用 `omc init` 扫描项目并导入配置：
+### 方式 1: MCP Server（推荐）
 
 ```bash
-omc init myapp /path/to/project   # 创建项目并导入配置
-omc init                           # 扫描当前目录并导入
+# 1. 初始化项目（只需一次）
+omc init /path/to/project
+# → 自动扫描 bootstrap*.yml
+# → 生成 .omc.json
+
+# 2. 启动 MCP Server
+omc mcp /path/to/project
+
+# 3. AI 直接调用工具
+mysql_query("SELECT COUNT(*) FROM orders")
+```
+
+### 方式 2: 记住配置
+
+```bash
+# 查看配置
+omc config /path/to/project
+
+# AI 记住后写代码自动带连接串
+```
+
+## 项目初始化
+
+### 自动扫描
+
+```bash
+omc init /path/to/project
 ```
 
 **自动扫描内容：**
-- pom.xml, package.json → 项目类型和技术栈
+- bootstrap*.yml → MySQL, Redis, NACOS 等配置
+- pom.xml → 技术栈
 - README.md → 项目说明
-- .env, config.json, application.yml → 配置文件
 
-**导入后存储为：**
-- Wiki/INDEX → 项目摘要和配置概览
+**生成文件：**
+- `.omc.json` - 项目配置（包含连接字符串和凭证）
+
+### 连接字符串格式
+
+| 服务 | 格式 | 示例 |
+|------|------|------|
+| MySQL | `jdbc:mysql://host:port/dbname` | `jdbc:mysql://localhost:3306/myapp` |
+| Redis | `redis://host:port` | `redis://localhost:6379` |
+| ES | `http://host:port` | `http://localhost:9200` |
 
 ## 知识自动记录
 
 ### 触发指令
-
-在对话中使用以下指令让 AI 自动记录到项目 Wiki：
 
 | 指令 | 用途 | 示例 |
 |------|------|------|
@@ -70,71 +149,23 @@ omc init                           # 扫描当前目录并导入
 | `#note xxx` | 记录笔记 | `#note 新工具: fzf` |
 | `#rule xxx` | 记录规范 | `#rule 使用 try-catch` |
 
-### AI 自动记录
-
-当用户让你记录重要信息时，调用 API：
+### API 调用
 
 ```
 POST /api/log
 Body: {"project": "项目名", "type": "log|note|rule", "content": "内容"}
 ```
 
-**示例：** 用户说 "帮我记住 ES 8.0 需要密码认证"
-```python
-requests.post('http://127.0.0.1:8848/api/log', json={
-    "project": "当前项目名",
-    "type": "log",
-    "content": "ES 8.0 需要密码认证，连接字符串要加 ?password=xxx"
-})
-```
-
-### 记录规则
-
-- 只记录到**当前项目**的 Wiki
-- 如果没有选择项目 → 提示 "请先选择项目"
-- 记录位置：项目 Wiki 的 LOG.md
-
-### 记录格式
-
-```markdown
-### {日期} - {类型}
-
-{内容}
-
----
-记录人: AI
-```
-
-### 例子
-
-```
-用户: #log ES 连接踩坑
-
-AI: 已记录到 {project}/LOG.md:
-
-### 2026-04-26 - 发现
-
-ES 8.0 需要密码认证，连接字符串要加
-?password=xxx
-
----
-记录人: Claude
-```
-
 ## 在 OpenCode 中使用
 
-AI 会先读取全局 Wiki (`__GLOBAL__`) 获取共享知识，再到项目 Wiki 获取项目特定内容。
+### AI 使用 MCP
 
-### 使用流程
+1. 用户启动 MCP Server: `omc mcp .`
+2. AI 收到工具列��
+3. AI 根据需求调用对应工具
 
-1. 读取 `wiki/INDEX.md` 了解 Wiki 结构
-2. 根据 INDEX 找到相关页面
-3. 深入阅读实体/概念页
-4. 有价值的发现写入 LOG.md
+### AI 记住配置
 
-### 知识沉淀
-
-- 好的答案写回 Wiki (知识复合)
-- 不要每次重新推导，要复用已有 Wiki
-- 实体页: 人/组织/工具等具体事物
-- 概念页: 模式/方法论等抽象知识
+1. 用户告诉 AI 项目名
+2. AI 调用 `omc config .` 读取配置
+3. AI 记住连接信息

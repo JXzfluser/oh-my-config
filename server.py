@@ -532,58 +532,6 @@ def scan_import():
 - {datetime.now().strftime('%Y-%m-%d')} - 初始化项目
 '''
     
-    if 'CLAUDE' not in configs['spec']:
-        configs['spec']['CLAUDE'] = f'''# CLAUDE.md - {project_name}
-
-> 项目配置和维护指南
-
-## 项目信息
-
-- 项目名: {project_name}
-- 类型: {project_info.get('type', 'unknown')}
-- 模块: {len(project_info.get('modules', []))} 个
-
-## 技术栈
-
-- Java/Maven 多模块项目
-- Spring Cloud
-- Nacos 服务发现
-- MySQL + Redis
-
-## 开发指南
-
-1. 使用 Maven 管理依赖
-2. 遵循 Spring Boot 规范
-3. 配置通过 NACOS 动态管理
-
-## 配置管理
-
-通过 oh-my-config 管理项目配置：
-- `omc get {project_name} MYSQL` - 获取数据库配置
-- `omc get {project_name} REDIS` - 获取缓存配置
-'''
-    
-    if 'GEMINI' not in configs['spec']:
-        configs['spec']['GEMINI'] = f'''# GEMINI.md - {project_name}
-
-## 项目配置
-
-### 数据库 (MYSQL)
-通过 oh-my-config 管理
-
-### 缓存 (REDIS)
-通过 oh-my-config 管理
-
-### 服务发现 (NACOS)
-通过 oh-my-config 管理
-
-## 快速开始
-
-1. 运行 `omc init {project_name}` 初始化
-2. 使用 `omc get {project_name}` 查看配置
-3. 使用 `omc sync {project_name}` 同步配置
-'''
-    
     for ctype, cname, content in [
         ('config', k, v) for k, v in configs['config'].items()
     ] + [
