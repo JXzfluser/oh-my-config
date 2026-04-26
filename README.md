@@ -52,11 +52,28 @@ uv run --with flask python3 server.py
 ```
 
 ## 主要功能
+- **配置管理** - 项目配置存储和读取
+- **Wiki 系统** - 全局 Wiki + 项目 Wiki
+- **规范文档** - CLAUDE.md, AGENTS.md, GEMINI.md
+- **一键同步** - 同步到项目目录
+- **AI 记录** - #log/#note/#rule 指令自动记录到项目 Wiki
 
-1. **配置管理** - 项目配置存储和读取
-2. **Wiki 系统** - 全局 Wiki + 项目 Wiki
-3. **规范文档** - CLAUDE.md, AGENTS.md, GEMINI.md
-4. **一键同步** - 同步到项目目录
+## AI 知识自动记录
+
+### 触发指令
+
+在 AI 对话中使用：
+
+| 指令 | 用途 | 示例 |
+|------|------|------|
+| `#log xxx` | 记录发现/坑 | `#log ES 8.0 需要密码` |
+| `#note xxx` | 记录笔记 | `#note 新工具: fzf` |
+| `#rule xxx` | 记录规范 | `#rule 使用 try-catch` |
+
+### 记录规则
+
+- 只记录到**当前项目**的 Wiki
+- 记录到项目的 LOG.md
 
 ## 配置模板
 
@@ -85,6 +102,7 @@ oh-my-config/
 - 点击顶部-brand加载README
 - 侧边栏收缩/展开功能
 - 收缩后显示迷你导航(展开/首页/全局/新建)
+- AI 知识自动记录 (#log/#note/#rule)
 
 ### 2026-04-25
 
