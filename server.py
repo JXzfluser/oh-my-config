@@ -400,88 +400,134 @@ def scan_import():
     
     project_name = name
     files_found = []
-    configs = {}
+    configs = {'wiki': {}, 'spec': {}, 'config': {}}
+    project_info = {'type': 'unknown', 'modules': []}
     
-    # Project info from pom.xml or package.json
-    pom_file = os.path.join(path, 'pom.xml')
-    if os.path.exists(pom_file):
-        with open(pom_file, 'r', encoding='utf-8') as f:
-            content = f.read()
-            files_found.append('pom.xml')
-            if '<artifactId>' in content:
-                import re
-                m = re.search(r'<artifactId>(.*?)</artifactId>', content)
-                if m:
-                    configs['PROJECT'] = {'type': 'java-maven', 'name': m.group(1)}
+    import yaml
     
-    pkg_file = os.path.join(path, 'package.json')
-    if os.path.exists(pkg_file):
-        with open(pkg_file, 'r', encoding='utf-8') as f:
-            try:
-                pkg = json.load(f)
-                files_found.append('package.json')
-                configs['PROJECT'] = {'type': 'nodejs', 'name': pkg.get('name', '')}
-            except:
-                pass
+    def scan_dir(dir_path, depth=0):
+        if depth > 3:
+            return
+        for item in os.listdir(dir_path):
+            item_path = os.path.join(dir_path, item)
+            if os.path.isdir(item_path) and not item.startswith('.'):
+                scan_dir(item_path, depth + 1)
+            elif os.path.isfile(item_path):
+                fname = os.path.basename(item_path)
+                if fname == 'pom.xml':
+                    with open(item_path, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                        files_found.append(item_path.replace(path + '/', ''))
+                        if '<artifactId>' in content:
+                            import re
+                            m = re.search(r'<artifactId>(.*?)</artifactId>', content)
+                            if m:
+                                project_info['modules'].append(m.group(1))
+                elif fname in ['package.json', 'package-lock.json']:
+                    with open(item_path, 'r', encoding='utf-8') as f:
+                        try:
+                            pkg = json.load(f)
+                            project_info['type'] = 'nodejs'
+                            project_info['name'] = pkg.get('name', '')
+                        except:
+                            pass
+                    files_found.append(item_path.replace(path + '/', ''))
+                elif fname == 'README.md' and depth == 0:
+                    with open(item_path, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                        configs['wiki']['README'] = content[:50000]
+                    files_found.append('README.md')
+                elif fname.startswith('bootstrap') and fname.endswith(('.yml', '.yaml')):
+                    try:
+                        with open(item_path, 'r', encoding='utf-8') as f:
+                            yml_content = f.read()
+                            files_found.append(item_path.replace(path + '/', ''))
+                            try:
+                                yml_data = yaml.safe_load(yml_content)
+                                if yml_data:
+                                    spring = yml_data.get('spring', {})
+                                    ds = spring.get('datasource', {})
+                                    redis = spring.get('redis', {})
+                                    nacos = spring.get('cloud', {}).get('nacos', {})
+                                    rm = yml_data.get('rm', {})
+                                    
+                                    if ds:
+                                        mysql_cfg = {
+                                            'url': ds.get('url', ''),
+                                            'username': ds.get('username', ''),
+                                            'password': ds.get('password', ''),
+                                            'driver': ds.get('driver-class-name', '')
+                                        }
+                                        configs['config']['MYSQL'] = json.dumps(mysql_cfg, indent=2, ensure_ascii=False)
+                                    
+                                    if redis:
+                                        redis_cfg = {
+                                            'host': redis.get('host', ''),
+                                            'port': redis.get('port', 6379),
+                                            'password': redis.get('password', ''),
+                                            'database': redis.get('database', 0)
+                                        }
+                                        configs['config']['REDIS'] = json.dumps(redis_cfg, indent=2, ensure_ascii=False)
+                                    
+                                    if nacos:
+                                        nacos_cfg = {
+                                            'serverAddr': nacos.get('discovery', {}).get('server-addr', ''),
+                                            'namespace': nacos.get('discovery', {}).get('namespace', ''),
+                                            'username': nacos.get('discovery', {}).get('username', ''),
+                                            'password': nacos.get('discovery', {}).get('password', '')
+                                        }
+                                        configs['config']['NACOS'] = json.dumps(nacos_cfg, indent=2, ensure_ascii=False)
+                                    
+                                    if rm:
+                                        configs['config']['RM'] = json.dumps(rm, indent=2, ensure_ascii=False)
+                            except:
+                                pass
+                    except:
+                        pass
+                elif fname.endswith('.properties'):
+                    with open(item_path, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                        files_found.append(item_path.replace(path + '/', ''))
+                        configs['config'][fname] = content[:10000]
     
-    # README
-    readme_file = os.path.join(path, 'README.md')
-    if os.path.exists(readme_file):
-        with open(readme_file, 'r', encoding='utf-8') as f:
-            content = f.read()
-            files_found.append('README.md')
+    scan_dir(path)
     
-    # Config files
-    config_patterns = ['.env', '.env.local', '.env.dev', '.env.prod', 
-                       'config.json', 'config.yml', 'config.yaml', 'application.yml', 'application.properties']
-    for pattern in config_patterns:
-        config_file = os.path.join(path, pattern)
-        if os.path.exists(config_file):
-            files_found.append(pattern)
-            try:
-                with open(config_file, 'r', encoding='utf-8') as f:
-                    configs[pattern] = f.read()[:10000]
-            except:
-                pass
+    if not project_info['modules']:
+        project_info['type'] = 'unknown'
     
-    # Create project
     conn = sqlite3.connect(DB)
     conn.execute('INSERT OR IGNORE INTO project (name) VALUES (?)', (project_name,))
     conn.commit()
     conn.close()
     
-    # Import as Wiki
-    summary = f'''# {project_name}
-
-> 自动导入的项目
-
-## 项目文件
-
-{files_found}
-
-## 项目配置
-
-{json.dumps(configs, indent=2, ensure_ascii=False)}
-
-## 扫描时间
-
-{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-'''
-    
-    conn = sqlite3.connect(DB)
-    conn.execute(
-        '''INSERT OR REPLACE INTO config (project, type, name, content, updated_at)
-           VALUES (?, 'wiki', 'INDEX', ?, ?)''',
-        (project_name, summary, datetime.now().isoformat())
-    )
-    conn.commit()
-    conn.close()
+    for ctype, cname, content in [
+        ('config', k, v) for k, v in configs['config'].items()
+    ] + [
+        ('wiki', k, v) for k, v in configs['wiki'].items()
+    ] + [
+        ('spec', k, v) for k, v in configs['spec'].items()
+    ]:
+        if content:
+            conn = sqlite3.connect(DB)
+            conn.execute(
+                '''INSERT OR REPLACE INTO config (project, type, name, content, updated_at)
+                   VALUES (?, ?, ?, ?, ?)''',
+                (project_name, ctype, cname, content, datetime.now().isoformat())
+            )
+            conn.commit()
+            conn.close()
     
     return jsonify({
         'success': True,
-        'message': f'Project {project_name} created with {len(files_found)} files',
+        'message': f'Project {project_name} created',
         'project': project_name,
-        'files': files_found
+        'files': len(files_found),
+        'configs': {
+            'wiki': list(configs['wiki'].keys()),
+            'spec': list(configs['spec'].keys()),
+            'config': list(configs['config'].keys())
+        },
+        'project_info': project_info
     })
 
 @app.route('/api/search')
