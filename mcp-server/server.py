@@ -8,18 +8,48 @@ from mcp.server.fastmcp import FastMCP
 mcp = FastMCP("oh-my-config")
 
 PROJECT_CONFIG: dict = {}
+CURRENT_PROJECT: str = ""
+
+API = os.environ.get("OMC_API", "http://127.0.0.1:8848")
 
 
-def load_project_config(search_dir: str = ".") -> dict:
-    search_path = Path(search_dir).resolve()
+def load_from_api(project: str) -> dict:
+    import urllib.request
     
-    for parent in [search_path] + list(search_path.parents):
-        config_file = parent / ".omc.json"
-        if config_file.exists():
-            with open(config_file) as f:
-                return json.load(f)
-    
-    return {}
+    try:
+        url = f"{API}/api/configs/{project}"
+        with urllib.request.urlopen(url, timeout=10) as resp:
+            configs = json.loads(resp.read().decode())
+        
+        result = {"name": project, "connections": {}, "credentials": {}, "env": {}}
+        for c in configs:
+            if c["type"] == "config":
+                name = c["name"]
+                try:
+                    data = json.loads(c["content"]) if c["content"].startswith("{") else {}
+                except:
+                    data = {"raw": c["content"]}
+                
+                if name == "MYSQL":
+                    url = data.get("url", "")
+                    if url.startswith("jdbc:"):
+                        result["connections"]["mysql"] = url
+                    result["credentials"]["mysql_user"] = data.get("username", "")
+                    result["credentials"]["mysql_password"] = data.get("password", "")
+                elif name == "REDIS":
+                    if "host" in data:
+                        result["connections"]["redis"] = f"redis://{data['host']}:{data.get('port', 6379)}"
+                        result["credentials"]["redis_password"] = data.get("password", "")
+                elif name == "NACOS":
+                    if "serverAddr" in data:
+                        result["connections"]["nacos"] = f"http://{data['serverAddr']}"
+                        result["credentials"]["nacos_user"] = data.get("username", "")
+                        result["credentials"]["nacos_password"] = data.get("password", "")
+        
+        return result
+    except Exception as e:
+        print(f"Error loading from API: {e}")
+        return {}
 
 
 def get_mysql_connection(config: dict):
@@ -219,37 +249,41 @@ def es_index(index: str, document: str) -> str:
 
 @mcp.tool()
 def get_project_info() -> str:
-    global PROJECT_CONFIG
+    global PROJECT_CONFIG, CURRENT_PROJECT
     
-    if not PROJECT_CONFIG:
-        return json.dumps({"error": "No project config"})
+    if not CURRENT_PROJECT:
+        return json.dumps({"error": "No project selected. Run 'omc mcp project' first"})
     
     return json.dumps({
-        "name": PROJECT_CONFIG.get("name"),
+        "name": CURRENT_PROJECT,
         "connections": list(PROJECT_CONFIG.get("connections", {}).keys()),
-        "env": PROJECT_CONFIG.get("env", {})
     })
 
 
 @mcp.tool()
-def load_project(path: str) -> str:
-    global PROJECT_CONFIG
+def load_project(project: str) -> str:
+    global PROJECT_CONFIG, CURRENT_PROJECT
     
-    config = load_project_config(path)
-    if config:
+    config = load_from_api(project)
+    if config and config.get("connections"):
         PROJECT_CONFIG.update(config)
-        return json.dumps({"ok": True, "project": config.get("name")})
+        CURRENT_PROJECT = project
+        return json.dumps({"ok": True, "project": project, "connections": list(config.get("connections", {}).keys())})
     else:
-        return json.dumps({"error": f"No .omc.json found in {path}"})
+        return json.dumps({"error": f"No config found for project: {project}"})
 
 
 if __name__ == "__main__":
     import sys
     
-    search_dir = sys.argv[1] if len(sys.argv) > 1 else "."
-    config = load_project_config(search_dir)
-    if config:
-        PROJECT_CONFIG.update(config)
-        print(f"Loaded config for: {config.get('name')}")
+    project = sys.argv[1] if len(sys.argv) > 1 else None
+    if project:
+        config = load_from_api(project)
+        if config:
+            PROJECT_CONFIG.update(config)
+            CURRENT_PROJECT = project
+            print(f"Loaded config for: {project}")
+        else:
+            print(f"Warning: No config found for: {project}")
     
     mcp.run()
