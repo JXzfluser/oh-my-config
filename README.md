@@ -113,6 +113,16 @@ AI 会自动记录到当前项目的 LOG.md。
 
 - 只记录到**当前项目**的 Wiki
 - 记录到项目的 LOG.md
+- AI 可通过 API 自动写入
+
+### API 调用
+
+AI 记录时自动调用：
+
+```bash
+POST /api/log
+Body: {"project": "项目名", "type": "log|note|rule", "content": "内容"}
+```
 
 ## 配置模板
 

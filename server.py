@@ -326,6 +326,61 @@ def sync():
     
     return jsonify({'success': True, 'synced': list(configs.keys())})
 
+@app.route('/api/log', methods=['POST'])
+def log_entry():
+    d = request.json
+    project = d.get('project')
+    log_type = d.get('type', 'log')
+    content = d.get('content', '')
+    
+    if not project or not content:
+        return jsonify({'error': 'project and content required'}), 400
+    
+    conn = sqlite3.connect(DB)
+    existing = conn.execute(
+        'SELECT content FROM config WHERE project=? AND type=\'wiki\' AND name=?',
+        (project, 'LOG')
+    ).fetchone()
+    
+    today = datetime.now().strftime('%Y-%m-%d')
+    
+    type_label = {'log': '发现', 'note': '笔记', 'rule': '规范'}.get(log_type, '记录')
+    
+    new_entry = f'\n### {today} - {type_label}\n\n{content}\n\n---\n记录人: AI\n'
+    
+    if existing:
+        current = existing[0]
+        log_lines = current.strip().split('\n') if current.strip() else []
+        insert_after = 0
+        for i, line in enumerate(log_lines):
+            if line.startswith('## '):
+                insert_after = i
+        
+        if insert_after > 0:
+            log_lines.insert(insert_after + 1, new_entry.strip())
+        else:
+            log_lines.insert(0, new_entry.strip())
+        updated = '\n'.join(log_lines)
+    else:
+        updated = f'''# LOG.md
+
+> AI 探索和发现记录
+
+## {today}
+
+{new_entry}
+'''
+    
+    conn.execute(
+        '''INSERT OR REPLACE INTO config (project, type, name, content, updated_at)
+           VALUES (?, 'wiki', 'LOG', ?, ?)''',
+        (project, updated, datetime.now().isoformat())
+    )
+    conn.commit()
+    conn.close()
+    
+    return jsonify({'success': True, 'file': 'LOG.md', 'type': log_type})
+
 @app.route('/api/search')
 def search_api():
     q = request.args.get('q', '').lower()

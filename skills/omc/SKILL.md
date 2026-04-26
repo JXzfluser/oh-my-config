@@ -52,6 +52,24 @@ omc sync myapp      # 同步到目录
 | `#note xxx` | 记录笔记 | `#note 新工具: fzf` |
 | `#rule xxx` | 记录规范 | `#rule 使用 try-catch` |
 
+### AI 自动记录
+
+当用户让你记录重要信息时，调用 API：
+
+```
+POST /api/log
+Body: {"project": "项目名", "type": "log|note|rule", "content": "内容"}
+```
+
+**示例：** 用户说 "帮我记住 ES 8.0 需要密码认证"
+```python
+requests.post('http://127.0.0.1:8848/api/log', json={
+    "project": "当前项目名",
+    "type": "log",
+    "content": "ES 8.0 需要密码认证，连接字符串要加 ?password=xxx"
+})
+```
+
 ### 记录规则
 
 - 只记录到**当前项目**的 Wiki
