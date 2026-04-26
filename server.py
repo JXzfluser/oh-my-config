@@ -313,6 +313,17 @@ def sync():
     with open(os.path.join(t, '.project-id'), 'w', encoding='utf-8') as f:
         f.write(p)
     
+    skill_src = os.path.join(os.path.dirname(__file__), 'skills', 'omc')
+    skill_dest = os.path.join(t, '.omc')
+    if os.path.isdir(skill_src):
+        os.makedirs(skill_dest, exist_ok=True)
+        for f in os.listdir(skill_src):
+            src_file = os.path.join(skill_src, f)
+            if os.path.isfile(src_file):
+                with open(src_file, 'r', encoding='utf-8') as sf:
+                    with open(os.path.join(skill_dest, f), 'w', encoding='utf-8') as df:
+                        df.write(sf.read())
+    
     return jsonify({'success': True, 'synced': list(configs.keys())})
 
 @app.route('/api/search')

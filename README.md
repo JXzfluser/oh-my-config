@@ -2,29 +2,26 @@
 
 > 本地配置中心 + LLM Wiki - 符合 Karpathy 理念的知识管理
 
-## 核心概念
+## 解决什么问题？
 
-### LLM Wiki 架构 (Karpathy 理念)
+当你在多个项目之间切换时，是否遇到过：
 
-```
-全局 Wiki (__GLOBAL__)
-├── INDEX.md     - 全局目录 (所有项目共享知识)
-├── LOG.md      - 变更记录 (AI 探索发现)
-├── ENTITIES.md - 实体索引 (人/组织/工具)
-└── CONCEPTS.md - 概念索引 (模式/方法论)
+- ❌ 每次和 AI 对话都要重新介绍项目配置
+- ❌ 踩过的坑下次又忘了
+- ❌ 配置找不到，四处翻记录
+- ❌ 项目规范不统一
 
-项目 Wiki (每个项目独立)
-├── INDEX.md   - 项目目录
-├── LOG.md     - 项目变更
-└── *.md       - 项目文档
-```
+**oh-my-config** 就是来解决这些问题的。
 
-### 设计原则
+## 核心功能
 
-1. **全局 Wiki** - 存放所有项目共享的知识
-2. **项目 Wiki** - 存放单个项目特有的内容
-3. **INDEX.md** - 每个 Wiki 的全局目录
-4. **LOG.md** - 记录 AI 的探索和发现
+| 功能 | 用途 |
+|------|------|
+| **配置管理** | 存 MySQL, ES, API keys 等 |
+| **Wiki 系统** | 项目知识库，AI 自动读取 |
+| **规范文档** | CLAUDE.md, AGENTS.md 等 |
+| **一键同步** | 同步到项目目录 |
+| **AI 记录** | #log 指令自动记录知识 |
 
 ## 快速开始
 
@@ -44,12 +41,54 @@ uv run --with flask python3 server.py
 ### CLI 使用
 
 ```bash
-./oh-my-config projects          # 列出项目
-./oh-my-config init myapp       # 初始化项目
-./oh-my-config get myapp MYSQL   # 获取配置
-./oh-my-config set myapp key value
-./oh-my-config sync myapp       # 同步到目录
+omc projects          # 列出项目
+omc init myapp       # 初始化项目
+omc get myapp MYSQL  # 获取配置
+omc set myapp key value
+omc sync myapp       # 同步到目录
+omc open            # 打开 Web 界面
 ```
+
+## 什么时候用？
+
+### 场景 1: 新项目启动
+
+```
+1. 打开 oh-my-config Web 界面
+2. 创建新项目 (如: myapp)
+3. 添加配置 (MySQL, ES, Redis 等)
+4. 添加 Wiki (项目说明、技术栈)
+5. 添加规范 (代码规范、提交规范)
+6. 点击"同步"下发到项目目录
+```
+
+### 场景 2: 和 AI 对话
+
+```
+1. 告诉 AI 项目名
+2. AI 自动读取项目配置和 Wiki
+3. 使用 #log 记录新发现
+4. AI 下次会自动记住
+```
+
+### 场景 3: 切换项目
+
+```
+1. 切换项目
+2. 配置自动切换
+3. AI 自动读取新项目知识
+```
+
+### 场景 4: 记录发现
+
+```
+和 AI 对话时:
+- #log ES 8.0 需要密码认证
+- #note 新工具: fzf
+- #rule 提交前先跑测试
+```
+
+AI 会自动记录到当前项目的 LOG.md。
 
 ## 主要功能
 - **配置管理** - 项目配置存储和读取
