@@ -4,26 +4,26 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>oh-my-config 配置中心</title>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap">
   <style>
     :root{
-      --bg:#0c0e14;--bg2:#13161d;--bg3:#1a1f29;--border:#252b38;
-      --primary:#818cf8;--primary-hover:#a5b4fc;
-      --accent:#34d399;--accent-hover:#6ee7b7;
-      --text:#e2e8f0;--text2:#94a3b8;--text3:#64748b;
-      --danger:#f87171;--warning:#fbbf24;
-      --radius:8px;--radius-sm:6px;--radius-xs:4px;
+      --bg:#171717;--bg2:#1e1e1e;--bg3:#252525;--border:#333;
+      --primary:#e5484d;--primary-hover:#f05a60;
+      --accent:#3fb950;--accent-hover:#56d364;
+      --text:#ededed;--text2:#999;--text3:#666;
+      --danger:#f05a60;--warning:#e3b341;
+      --radius:6px;--radius-sm:4px;--radius-xs:3px;
     }
     [data-theme="light"]{
-      --bg:#f8fafc;--bg2:#f1f5f9;--bg3:#e2e8f0;--border:#cbd5e1;
-      --text:#1e293b;--text2:#475569;--text3:#94a3b8;
+      --bg:#fff;--bg2:#f5f5f5;--bg3:#e8e8e8;--border:#ddd;
+      --text:#171717;--text2:#666;--text3:#999;
     }
     *{margin:0;padding:0;box-sizing:border-box}
     html,body{height:100%;overflow:hidden}
     body{
       font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
       background:var(--bg);color:var(--text);
-      transition:background 0.3s, color 0.3s;
+      transition:background 0.2s, color 0.2s;
     }
     
     .app{display:flex;height:100vh}
@@ -36,9 +36,21 @@
     }
     .sidebar-header{
       padding:20px;border-bottom:1px solid var(--border);
-      display:flex;align-items:center;gap:12px
+      display:flex;align-items:center;gap:12px;cursor:pointer
     }
-    .logo{
+    .sidebar-toggle{
+      width:20px;height:20px;display:flex;align-items:center;justify-content:center;
+      cursor:pointer;font-size:12px;color:var(--text3)
+    }
+.sidebar.collapsed{width:52px;min-width:52px}
+.logo,.brand,.sidebar-nav,.sidebar-add,.sidebar-toggle,.nav-title{transition:all .2s}
+.sidebar.collapsed .sidebar-nav,.sidebar.collapsed .sidebar-add,.sidebar.collapsed .sidebar-toggle,.sidebar.collapsed .nav-title{display:none}
+.sidebar.collapsed .sidebar-header{display:flex;align-items:center;justify-content:center;padding:8px 0;gap:4px}
+.sidebar.collapsed .sidebar-mini-nav{display:flex}
+.sidebar-mini-nav{display:flex;align-items:center}
+.mini-nav-item{font-size:18px;cursor:pointer;opacity:.6;transition:opacity .2s;padding:4px;text-align:center}
+.mini-nav-item:hover{opacity:1}
+.logo{
       width:28px;height:28px;background:#1e293b;border:1px solid #334155;
       border-radius:6px;display:flex;align-items:center;justify-content:center
     }
@@ -52,6 +64,14 @@
       font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;
       color:var(--text3);margin-bottom:8px
     }
+    .nav-title.nav-collapsible{
+      cursor:pointer;display:flex;align-items:center;justify-content:space-between
+    }
+    .nav-title.nav-collapsible .arrow{transition:transform .2s}
+    .nav-title.collapsed .arrow{transform:rotate(-90deg)}
+    .nav-title.collapsed + .nav-content{display:none}
+    .nav-title.nav-collapsible.collapsed + .nav-content{display:none}
+    .nav-content{overflow:hidden}
 .nav-item{
   display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:6px;cursor:pointer;font-size:13px;color:var(--text2);transition:all .15s
 }
@@ -71,21 +91,22 @@
     .nav-item.active .badge{background:rgba(99,102,241,0.2);color:var(--primary)}
     
     .sidebar-add{
-      display:flex;gap:6px;padding:12px;border-top:1px solid var(--border)
+      display:flex;flex-wrap:wrap;gap:6px;padding:12px;border-top:1px solid var(--border)
     }
     .sidebar-add input{
-      flex:1;background:var(--bg3);border:1px solid var(--border);
+      width:100%;background:var(--bg3);border:1px solid var(--border);
       border-radius:var(--radius-sm);padding:8px 10px;font-size:12px;
-      color:var(--text);outline:none
+      color:var(--text);outline:none;flex:1 1 auto;min-width:0
     }
     .sidebar-add input:focus{border-color:var(--primary)}
     .sidebar-add button{
       background:var(--primary);color:#fff;border:none;
       border-radius:var(--radius-sm);padding:8px 12px;font-size:12px;
-      cursor:pointer
+      cursor:pointer;flex:0 0 auto
     }
+    .sidebar-add button:hover{opacity:0.9}
     
-    .sidebar-footer{padding:12px;border-top:1px solid var(--border)}
+    .sidebar-footer{padding:8px 12px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:center}
     .sidebar-action{
       display:flex;align-items:center;gap:8px;padding:8px 10px;
       border-radius:var(--radius-sm);cursor:pointer;font-size:12px;
@@ -120,27 +141,24 @@
     .github-link svg{width:14px;height:14px}
     
     .btn{
-      padding:6px 12px;border-radius:4px;font-size:12px;font-weight:500;
-      cursor:pointer;transition:all 0.15s ease;display:inline-flex;align-items:center;gap:4px
+      padding:6px 12px;border-radius:var(--radius-sm);font-size:12px;font-weight:500;
+      cursor:pointer;transition:all 0.15s ease;display:inline-flex;align-items:center;gap:4px;
+      border:1px solid transparent
     }
-    .btn-primary{background:#1a1f29;color:#cbd5e1;border:1px solid #334155}
-    .btn-primary:hover{background:#252d3d;border-color:#475569}
-    .btn-primary:active{background:#0f1521}
-    .btn-success{background:#0f1f14;color:#86efac;border:1px solid #1e3a2a}
-    .btn-success:hover{background:#15261c;border-color:#2d4a35}
-    .btn-success:active{background:#0a140d}
-    .btn-danger{background:#1f0a0a;color:#fca5a5;border:1px solid #3a1e1e}
-    .btn-danger:hover{background:#2c1515;border-color:#4a2d2d}
-    .btn-danger:active{background:#140a0a}
-    .btn-ghost{background:transparent;color:var(--text2);border:1px solid transparent}
-    .btn-ghost:hover{background:var(--bg3);border-color:var(--border);color:var(--text)}
+    .btn-primary{background:var(--bg3);color:var(--text);border-color:var(--border)}
+    .btn-primary:hover{background:var(--border)}
+    .btn-primary:active{background:#333}
+    .btn-success{background:#1a3d1a;color:#7ee787;border-color:#2d5a2d}
+    .btn-success:hover{background:#2d5a2d}
+    .btn-danger{background:#3d1a1a;color:#f07070;border-color:#5a2d2d}
+    .btn-danger:hover{background:#5a2d2d}
+    .btn-ghost{background:transparent;color:var(--text2);border-color:transparent}
+    .btn-ghost:hover{background:var(--bg3);color:var(--text)}
     .btn-ghost:active{background:var(--border)}
-    .btn-export{background:#1e1a2e;color:#c4b5fd;border:1px solid #2d2450}
-    .btn-export:hover{background:#2a2240;border-color:#3d3270}
-    .btn-export:active{background:#15121f}
-    .btn-sync{background:#1a2e24;color:#6ee7b7;border:1px solid #2d4a3a}
-    .btn-sync:hover{background:#224035;border-color:#3d5a4a}
-    .btn-sync:active{background:#152420}
+    .btn-export{background:var(--bg3);color:var(--primary);border-color:var(--border)}
+    .btn-export:hover{border-color:var(--primary)}
+    .btn-sync{background:var(--bg3);color:var(--accent);border-color:var(--border)}
+    .btn-sync:hover{border-color:var(--accent)}
     
     /* Tabs */
     .tabs{
@@ -334,14 +352,22 @@
         <div class="logo">
           <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
         </div>
-        <div class="brand">oh-my-<span>config</span></div>
+        <div class="brand" id="brandText" onclick="loadReadme()" style="cursor:pointer">oh-my-<span>config</span></div>
+        <div class="sidebar-toggle" onclick="toggleSidebar(event)" style="margin-left:auto;cursor:pointer;color:var(--text3);font-size:12px">◀</div>
       </div>
       
-      <div class="sidebar-nav">
+      <div class="sidebar-mini-nav" id="miniNav" style="display:none;padding:8px 4px;gap:8px;flex-direction:column;align-items:center">
+        <div class="mini-nav-item" onclick="toggleSidebar(event)" title="展开侧边栏" style="font-size:12px;padding:6px 10px;background:var(--bg2);border-radius:4px">展开</div>
+        <div class="mini-nav-item" onclick="loadReadme()" title="首页">🏠</div>
+        <div class="mini-nav-item" onclick="selectGlobal()" title="全局">🌐</div>
+        <div class="mini-nav-item" onclick="addProject()" title="新建项目">➕</div>
+      </div>
+      
+      <div class="sidebar-nav" id="sidebarNav">
         <div class="nav-section">
           <div class="nav-title">全局</div>
           <div id="globalNav">
-            <div class="nav-item global-wiki ${currentProject === '__GLOBAL__' ? 'active' : ''}" onclick="selectGlobal()">
+            <div class="nav-item global-wiki" onclick="selectGlobal()">
               <span>🌐</span> LLM Wiki
             </div>
           </div>
@@ -355,13 +381,9 @@
       
       <div class="sidebar-add">
         <input id="newProjectName" placeholder="新项目名..." onkeydown="if(event.key==='Enter')addProject()">
-        <button onclick="addProject()">+</button>
       </div>
       
       <div class="sidebar-footer">
-        <div class="sidebar-action" onclick="showHelp()">
-          <span>📖</span> 使用指南
-        </div>
       </div>
     </div>
     
@@ -476,11 +498,84 @@ omc sync myapp  # 同步到目录</pre>
     let hasChanges = false;
     let viewMode = 'edit';
 
+    function toggleSection(el) {
+      el.classList.toggle('collapsed');
+      const arrow = el.querySelector('.arrow');
+      if (arrow) {
+        arrow.textContent = el.classList.contains('collapsed') ? '▶' : '▼';
+      }
+      const content = el.nextElementSibling;
+      if (content) {
+        content.style.display = el.classList.contains('collapsed') ? 'none' : 'block';
+      }
+      localStorage.setItem('nav:' + el.dataset.section, el.classList.contains('collapsed'));
+    }
+    
+    document.querySelectorAll('.nav-title.nav-collapsible').forEach(el => {
+      if (localStorage.getItem('nav:' + el.dataset.section) === 'true') {
+        el.classList.add('collapsed');
+        const arrow = el.querySelector('.arrow');
+        if (arrow) arrow.textContent = '▶';
+        const content = el.nextElementSibling;
+        if (content) content.style.display = 'none';
+      }
+    });
+    
+function toggleSidebar(e) {
+      if (e) e.stopPropagation();
+      const sb = document.querySelector('.sidebar');
+      const headerToggle = sb.querySelector('.sidebar-toggle');
+      const miniNav = document.getElementById('miniNav');
+      const fullHeader = document.querySelector('.sidebar-header');
+      sb.classList.toggle('collapsed');
+      
+      const collapsed = sb.classList.contains('collapsed');
+      
+      if (headerToggle) headerToggle.textContent = collapsed ? '▶' : '◀';
+      if (fullHeader) fullHeader.style.display = collapsed ? 'none' : 'flex';
+      if (miniNav) miniNav.style.display = collapsed ? 'flex' : 'none';
+      localStorage.setItem('sidebar:collapsed', collapsed);
+    }
+    
+    async function showHome() {
+      const readme = await (await fetch('/api/readme')).text();
+      document.getElementById('editorTextarea').value = readme;
+      currentProject = null;
+    }
+
+    // Restore sidebar state
+    if (localStorage.getItem('sidebar:collapsed') === 'true') {
+      document.querySelector('.sidebar').classList.add('collapsed');
+      const headerToggle = document.querySelector('.sidebar .sidebar-toggle');
+      if (headerToggle) headerToggle.textContent = '▶';
+    }
+    
+    async function showHome() {
+      const readme = await (await fetch('/api/readme')).text();
+      document.getElementById('editorTextarea').value = readme;
+      currentProject = null;
+      currentFile = null;
+      showEditor(true);
+      setMode('preview');
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+    }
+    
+    // Restore sidebar state
+    if (localStorage.getItem('sidebar:collapsed') === 'true') {
+      document.querySelector('.sidebar').classList.add('collapsed');
+      const headerToggle = document.querySelector('.sidebar .sidebar-toggle');
+      if (headerToggle) headerToggle.textContent = '▶';
+      const fullHeader = document.querySelector('.sidebar-header');
+      if (fullHeader) fullHeader.style.display = 'none';
+      const miniNav = document.getElementById('miniNav');
+      if (miniNav) miniNav.style.display = 'flex';
+    }
+    
     async function init() {
       loadTheme();
       projects = await (await fetch('/api/projects')).json();
       renderProjects();
-      if (projects.length > 0) selectProject(projects[0].name);
+      await showHome();
     }
 
     function renderProjects() {
@@ -529,7 +624,40 @@ omc sync myapp  # 同步到目录</pre>
       projects = await (await fetch('/api/projects')).json();
       selectProject(name);
     }
-
+    
+    function importMarkdown() {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.md';
+      input.multiple = true;
+      input.onchange = async (e) => {
+        const files = e.target.files;
+        if (!files.length) return;
+        if (!currentProject || currentProject === '__GLOBAL__') {
+          alert('请先选择一个项目');
+          return;
+        }
+        for (let i = 0; i < files.length; i++) {
+          const f = files[i];
+          const name = f.name.replace('.md', '');
+          const content = await f.text();
+          await fetch('/api/config', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+              project: currentProject,
+              type: 'wiki',
+              name: name,
+              content: content
+            })
+          });
+        }
+        loadConfigs();
+        alert('导入完成');
+      };
+      input.click();
+    }
+    
 async function selectProject(name) {
       currentProject = name;
       currentFile = null;
@@ -621,7 +749,10 @@ async function selectProject(name) {
         });
         addHtml += '</select>';
       }
-      addHtml += '<div style="display:flex;gap:4px"><input id="newFileName" placeholder="新建..." onkeydown="if(event.key===\'Enter\')addFile()"><button onclick="addFile()" style="padding:6px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:var(--text);cursor:pointer">+</button></div></div>';
+      if (currentType === 'wiki') {
+        addHtml += '<button class="btn btn-success" onclick="importMarkdown()">📥 导入</button>';
+      }
+      addHtml += '<div style="display:flex;gap:4px"><input id="newFileName" placeholder="新建..." onkeydown="if(event.key===\'Enter\')addFile()"><button class="btn btn-ghost" onclick="addFile()">+</button></div></div>';
       list.innerHTML = sysHtml + html + addHtml;
     }
 
@@ -690,6 +821,16 @@ async function selectProject(name) {
       }
       await loadConfigs();
       selectFile(name);
+    }
+
+    async function loadReadme() {
+      const res = await fetch('/api/readme');
+      const text = await res.text();
+      currentFile = 'README';
+      currentProject = '__GLOBAL__';
+      hasChanges = false;
+      document.getElementById('editorTextarea').value = text;
+      showEditor(true);
     }
 
     async function selectFile(name) {
