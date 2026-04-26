@@ -11,6 +11,24 @@ cmd_init() {
   local name="$1"
   local desc="$2"
   
+  if [ -z "$name" ]; then
+    # Initialize current directory as omc project
+    name=$(basename "$(pwd)")
+    echo "Initializing current directory as omc project: $name"
+    
+    # Create .project-id
+    echo "$name" > .project-id
+    
+    # Create .omc directory with skill
+    mkdir -p .omc
+    curl -s "$API/api/skill" > .omc/SKILL.md 2>/dev/null || echo "# $name\n\n> Initialized by oh-my-config" > .omc/SKILL.md
+    
+    echo "✓ Initialized $name"
+    echo "  - .project-id created"
+    echo "  - .omc/ directory created"
+    return 0
+  fi
+  
   curl -s -X POST "$API/api/project" \
     -H "Content-Type: application/json" \
     -d "{\"name\":\"$name\",\"description\":\"$desc\"}" >/dev/null
@@ -157,7 +175,7 @@ case "$1" in
     echo ""
     echo "用法:"
     echo "  omc projects              # 列出所有项目"
-    echo "  omc init <name> [desc]   # 初始化项目"
+    echo "  omc init [name] [desc]   # 初始化项目(无参数=当前目录)"
     echo "  omc list <project>        # 列出项目配置"
     echo "  omc get <project> <type> <name>  # 获取配置"
     echo "  omc debug <project> [config]    # 调试查看配置"

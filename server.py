@@ -381,6 +381,14 @@ def log_entry():
     
     return jsonify({'success': True, 'file': 'LOG.md', 'type': log_type})
 
+@app.route('/api/skill')
+def get_skill():
+    skill_path = os.path.join(os.path.dirname(__file__), 'skills', 'omc', 'SKILL.md')
+    if os.path.exists(skill_path):
+        with open(skill_path, 'r', encoding='utf-8') as f:
+            return f.read()
+    return '# Skill not found', 404
+
 @app.route('/api/search')
 def search_api():
     q = request.args.get('q', '').lower()
